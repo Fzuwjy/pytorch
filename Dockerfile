@@ -1,10 +1,37 @@
-FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-devel
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
 
-RUN apt-get update && apt-get install -y libgl1-mesa-glx libpci-dev curl nano psmisc zip git && apt-get --fix-broken install -y
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN conda install -y scikit-learn pandas flake8 yapf isort yacs future libgcc
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    curl \
+    build-essential \
+    cmake \
+    ninja-build \
+    libglib2.0-0 \
+    libgl1 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip && python -m pip install --upgrade setuptools && \
-    pip install opencv-python tb-nightly matplotlib logger_tt tabulate tqdm wheel mccabe scipy
+RUN conda create -y -n work python=3.12.3 pip \
+    && conda clean -afy
 
-COPY ./fonts/* /opt/conda/lib/python3.10/site-packages/matplotlib/mpl-data/fonts/ttf/
+ENV PATH=/opt/conda/envs/work/bin:$PATH
+
+RUN python -m pip install --upgrade pip
+
+RUN pip install \
+    torch==2.5.1 \
+    torchvision==0.20.1 \
+    --index-url https://download.pytorch.org/whl/cu124
+
+COPY requirements-docker.txt /tmp/requirements-docker.txt
+
+RUN pip install --no-cache-dir -r /tmp/requirements-docker.txt
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]
