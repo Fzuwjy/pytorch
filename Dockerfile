@@ -32,6 +32,9 @@ COPY requirements-docker.txt /tmp/requirements-docker.txt
 
 RUN pip install --no-cache-dir -r /tmp/requirements-docker.txt
 
+RUN echo 'export PATH=/opt/conda/envs/work/bin:$PATH' > /etc/profile.d/work-env.sh \
+    && echo 'export PATH=/opt/conda/envs/work/bin:$PATH' >> /root/.bashrc
+    
 WORKDIR /workspace
 
 CMD ["/bin/bash"]
