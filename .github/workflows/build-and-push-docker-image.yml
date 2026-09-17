@@ -49,7 +49,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ secrets.REGISTRY_HOSTNAME }}/${{ secrets.REGISTRY_REPONAME }}/${{ github.event.repository.name }}
+            ${{ secrets.REGISTRY_HOSTNAME }}/${{ secrets.REGISTRY_REPONAME }}/mmdino
           flavor: |
             latest=auto
           tags: |
