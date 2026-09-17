@@ -1,11 +1,17 @@
 FROM pytorch/pytorch:2.7.1-cuda11.8-cudnn9-devel
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
 
-RUN apt-get update && apt-get install -y \
+# 系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     wget \
     curl \
+    vim \
+    unzip \
+    ca-certificates \
     build-essential \
     cmake \
     ninja-build \
@@ -16,25 +22,41 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN conda create -y -n work python=3.12.3 pip \
-    && conda clean -afy
+# 升级基础 Python 工具
+RUN python -m pip install --upgrade pip setuptools wheel
 
-ENV PATH=/opt/conda/envs/work/bin:$PATH
+# MM-DINO / DINOv3 基础依赖
+RUN pip install --no-cache-dir \
+    ftfy \
+    omegaconf \
+    regex \
+    scikit-learn \
+    submitit \
+    termcolor \
+    torchmetrics \
+    numpy \
+    pillow \
+    scikit-image \
+    tqdm \
+    transformers \
+    matplotlib \
+    opencv-python
 
-RUN python -m pip install --upgrade pip
+# 构建阶段直接检查关键版本
+RUN python - <<'PY'
+import sys
+import torch
+import torchvision
 
-RUN pip install \
-    torch==2.5.1 \
-    torchvision==0.20.1 \
-    --index-url https://download.pytorch.org/whl/cu124
+print("Python:", sys.version)
+print("PyTorch:", torch.__version__)
+print("Torchvision:", torchvision.__version__)
+print("PyTorch CUDA:", torch.version.cuda)
 
-COPY requirements-docker.txt /tmp/requirements-docker.txt
+assert sys.version_info >= (3, 11), sys.version
+assert torch.__version__.startswith("2.7.1"), torch.__version__
+PY
 
-RUN pip install --no-cache-dir -r /tmp/requirements-docker.txt
-
-RUN echo 'export PATH=/opt/conda/envs/work/bin:$PATH' > /etc/profile.d/work-env.sh \
-    && echo 'export PATH=/opt/conda/envs/work/bin:$PATH' >> /root/.bashrc
-    
 WORKDIR /workspace
 
 CMD ["/bin/bash"]
