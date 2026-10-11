@@ -64,7 +64,7 @@ RUN python -m pip install --no-cache-dir \
 # Logging and evaluation dependencies
 RUN python -m pip install --no-cache-dir \
     tensorboard==2.9.1 \
-    protobuf==3.20.3
+    protobuf==3.19.6
 
 # Validate the environment during image build
 RUN python - <<'PY'
