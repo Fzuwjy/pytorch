@@ -1,10 +1,13 @@
-
 FROM pytorch/pytorch:1.11.0-cuda11.3-cudnn8-devel
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 
+# Disable the outdated CUDA APT repository in the base image.
+# CUDA libraries already installed in the image remain unchanged.
+RUN find /etc/apt/sources.list.d -type f -name '*.list' \
+    -exec sed -i '/developer\.download\.nvidia\.com\/compute\/cuda\/repos/d' {} +
 # System dependencies and Java for METEOR evaluation
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
