@@ -1,40 +1,85 @@
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+
+FROM pytorch/pytorch:2.7.1-cuda11.8-cudnn9-devel
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
 
-RUN apt-get update && apt-get install -y \
+# System dependencies and Java for METEOR evaluation
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     wget \
     curl \
+    vim \
+    unzip \
+    ca-certificates \
     build-essential \
     cmake \
     ninja-build \
+    default-jre-headless \
+    locales \
     libglib2.0-0 \
     libgl1 \
     libsm6 \
     libxext6 \
     libxrender1 \
+    && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN conda create -y -n work python=3.12.3 pip \
-    && conda clean -afy
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
-ENV PATH=/opt/conda/envs/work/bin:$PATH
+# Keep the official PyTorch environment
+RUN python -m pip install --upgrade pip setuptools wheel
 
-RUN python -m pip install --upgrade pip
+# SCNet training and data dependencies
+RUN python -m pip install --no-cache-dir \
+    numpy==1.26.4 \
+    imageio==2.37.0 \
+    einops==0.8.1 \
+    timm==0.9.16 \
+    huggingface-hub==0.25.2 \
+    tqdm==4.67.1 \
+    Pillow==11.1.0 \
+    opencv-python==4.10.0.84 \
+    matplotlib==3.9.2
 
-RUN pip install \
-    torch==2.5.1 \
-    torchvision==0.20.1 \
-    --index-url https://download.pytorch.org/whl/cu124
+# Model complexity and parameter analysis
+RUN python -m pip install --no-cache-dir \
+    fvcore==0.1.5.post20221221 \
+    ptflops==0.7.5 \
+    thop==0.1.1.post2209072238 \
+    torchinfo==1.8.0
 
-COPY requirements-docker.txt /tmp/requirements-docker.txt
+# Build-time environment verification
+RUN python - <<'PY'
+import sys
+import torch
+import torchvision
+import numpy
+import timm
+import einops
 
-RUN pip install --no-cache-dir -r /tmp/requirements-docker.txt
+from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from fvcore.nn import FlopCountAnalysis
 
-RUN echo 'export PATH=/opt/conda/envs/work/bin:$PATH' > /etc/profile.d/work-env.sh \
-    && echo 'export PATH=/opt/conda/envs/work/bin:$PATH' >> /root/.bashrc
-    
+print("Python:", sys.version)
+print("PyTorch:", torch.__version__)
+print("Torchvision:", torchvision.__version__)
+print("CUDA build:", torch.version.cuda)
+print("NumPy:", numpy.__version__)
+print("timm:", timm.__version__)
+print("torch.compile:", hasattr(torch, "compile"))
+
+assert sys.version_info >= (3, 11)
+assert torch.__version__.startswith("2.7.1")
+assert torchvision.__version__.startswith("0.22.1")
+assert torch.version.cuda == "11.8"
+assert hasattr(torch, "compile")
+PY
+
+RUN java -version
+
 WORKDIR /workspace
 
 CMD ["/bin/bash"]
