@@ -104,7 +104,9 @@ RUN cd /opt/ChangeMamba/kernels/selective_scan \
        --no-build-isolation --no-deps .
 
 # Verify dependencies and compiled CUDA extensions
-RUN python -m pip check
+# Install the Python ninja package required by selective_scan
+RUN python -m pip install --no-cache-dir ninja==1.11.1.1 \
+    && python -m pip check
 
 RUN python - <<'PY'
 import sys
