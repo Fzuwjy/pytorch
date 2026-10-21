@@ -92,3 +92,4 @@ RUN java -version
 WORKDIR /workspace
 
 CMD ["/bin/bash"]
+# Change3D RTX3090 environment
