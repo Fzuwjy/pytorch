@@ -45,11 +45,12 @@ RUN python -m pip install --no-cache-dir \
     albucore==0.0.24 \
     albumentations==2.0.6 \
     timm==1.0.15 \
+    huggingface-hub==0.30.2 \
+    safetensors==0.5.3 \
     segmentation-models-pytorch==0.5.0 \
     cupy-cuda12x==13.4.1 \
     thop==0.1.1.post2209072238 \
-    fvcore==0.1.5.post20221221 \
-    patchify==0.2.3
+    fvcore==0.1.5.post20221221
 
 RUN python -m pip check
 
