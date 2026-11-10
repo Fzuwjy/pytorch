@@ -3,8 +3,6 @@ FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-devel
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV MAX_JOBS=1
-ENV MAMBA_FORCE_BUILD=TRUE
-ENV CAUSAL_CONV1D_FORCE_BUILD=TRUE
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
@@ -29,6 +27,7 @@ RUN python -m pip install --no-cache-dir \
     psutil
 
 RUN python -m pip install --no-cache-dir \
+    torchvision==0.18.1 \
     torchaudio==2.3.1 \
     --index-url https://download.pytorch.org/whl/cu118
 
@@ -46,12 +45,12 @@ RUN python -m pip install --no-cache-dir \
     yacs==0.1.8
 
 RUN python -m pip install --no-cache-dir --no-build-isolation \
-    causal-conv1d==1.1.1
+    "git+https://github.com/Dao-AILab/causal-conv1d.git@v1.1.1"
 
 RUN python -m pip install --no-cache-dir --no-build-isolation \
-    mamba-ssm==1.1.2
+    "git+https://github.com/state-spaces/mamba.git@v1.1.2"
 
-RUN python -c "import torch; assert torch.__version__.startswith('2.3.1'); assert torch.version.cuda == '11.8'; print('PyTorch:', torch.__version__)"
+RUN python -c "import torch, torchvision, torchaudio; assert torch.__version__.startswith('2.3.1'); assert torchvision.__version__.startswith('0.18.1'); assert torchaudio.__version__.startswith('2.3.1'); assert torch.version.cuda == '11.8'; print('PyTorch:', torch.__version__, 'CUDA:', torch.version.cuda)"
 
 RUN python -c "import causal_conv1d; import mamba_ssm; from mamba_ssm.ops.selective_scan_interface import selective_scan_fn; print('Mamba CUDA extensions imported successfully')"
 
