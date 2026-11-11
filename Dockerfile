@@ -6,22 +6,6 @@ ENV MAX_JOBS=1
 ENV CAUSAL_CONV1D_FORCE_BUILD=TRUE
 ENV MAMBA_FORCE_BUILD=TRUE
 
-RUN set -eux; \
-    for attempt in 1 2 3; do \
-        if apt-get -o Acquire::Retries=5 --error-on=any update; then \
-            break; \
-        fi; \
-        if [ "$attempt" -eq 3 ]; then exit 1; fi; \
-        sleep 15; \
-    done; \
-    apt-get -o Acquire::Retries=5 install -y --no-install-recommends \
-        git \
-        build-essential \
-        cmake \
-        ninja-build; \
-    rm -rf /var/lib/apt/lists/*
-
-
 RUN python -m pip install --no-cache-dir \
     "pip<25" \
     "setuptools<70" \
@@ -30,6 +14,12 @@ RUN python -m pip install --no-cache-dir \
     packaging \
     psutil \
     einops==0.8.0
+
+RUN command -v nvcc && \
+    command -v gcc && \
+    command -v g++ && \
+    command -v git && \
+    command -v cmake
 
 RUN python -c "import torch; assert torch.__version__.startswith('2.3.1'); assert torch.version.cuda == '11.8'; print(torch.__version__, torch.version.cuda)"
 
@@ -48,25 +38,6 @@ RUN python -m pip wheel --no-cache-dir --no-deps --no-build-isolation \
 
 
 FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime AS runtime
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-
-RUN set -eux; \
-    for attempt in 1 2 3; do \
-        if apt-get -o Acquire::Retries=5 --error-on=any update; then \
-            break; \
-        fi; \
-        if [ "$attempt" -eq 3 ]; then exit 1; fi; \
-        sleep 15; \
-    done; \
-    apt-get -o Acquire::Retries=5 install -y --no-install-recommends \
-        libglib2.0-0 \
-        libgl1 \
-        libsm6 \
-        libxext6 \
-        libxrender1; \
-    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /wheels /wheels
 
@@ -87,7 +58,6 @@ RUN python -m pip install --no-cache-dir \
     tqdm==4.66.5 \
     PyYAML==6.0.2 \
     yacs==0.1.8 \
-    ninja \
     packaging \
     psutil \
     transformers==4.38.2
