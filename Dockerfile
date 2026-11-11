@@ -5,16 +5,36 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV CUDA_HOME=/usr/local/cuda
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    wget \
-    curl \
-    ca-certificates \
-    build-essential \
-    libglib2.0-0 \
-    libgl1 \
-    libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    for attempt in 1 2 3 4 5; do \
+        rm -rf /var/lib/apt/lists/*; \
+        if apt-get update \
+            -o Acquire::Retries=5 \
+            -o Acquire::http::Timeout=30 \
+            -o Acquire::https::Timeout=30 \
+            > /tmp/apt-update.log 2>&1 \
+            && ! grep -Eqi 'Could not resolve|Failed to fetch|Some index files failed' /tmp/apt-update.log; then \
+            cat /tmp/apt-update.log; \
+            break; \
+        else \
+            cat /tmp/apt-update.log; \
+            if [ "$attempt" -eq 5 ]; then \
+                echo "APT update failed after 5 attempts"; \
+                exit 1; \
+            fi; \
+            sleep 10; \
+        fi; \
+    done; \
+    apt-get install -y --no-install-recommends \
+        git \
+        wget \
+        curl \
+        ca-certificates \
+        build-essential \
+        libglib2.0-0 \
+        libgl1 \
+        libgomp1; \
+    rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL \
     https://github.com/conda-forge/miniforge/releases/download/25.3.0-3/Miniforge3-25.3.0-3-Linux-x86_64.sh \
