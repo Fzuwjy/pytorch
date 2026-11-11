@@ -17,9 +17,7 @@ RUN python -m pip install --no-cache-dir \
 
 RUN command -v nvcc && \
     command -v gcc && \
-    command -v g++ && \
-    command -v git && \
-    command -v cmake
+    command -v g++
 
 RUN python -c "import torch; assert torch.__version__.startswith('2.3.1'); assert torch.version.cuda == '11.8'; print(torch.__version__, torch.version.cuda)"
 
@@ -27,14 +25,14 @@ RUN mkdir -p /wheels
 
 RUN python -m pip wheel --no-cache-dir --no-deps --no-build-isolation \
     --wheel-dir=/wheels \
-    "git+https://github.com/Dao-AILab/causal-conv1d.git@v1.1.1"
+    "https://github.com/Dao-AILab/causal-conv1d/archive/refs/tags/v1.1.1.tar.gz"
 
 RUN python -m pip install --no-cache-dir --no-deps \
     /wheels/causal_conv1d-*.whl
 
 RUN python -m pip wheel --no-cache-dir --no-deps --no-build-isolation \
     --wheel-dir=/wheels \
-    "git+https://github.com/state-spaces/mamba.git@v1.1.2"
+    "https://github.com/state-spaces/mamba/archive/refs/tags/v1.1.2.tar.gz"
 
 
 FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime AS runtime
