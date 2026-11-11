@@ -62,5 +62,6 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name == 'release' }}
+          provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
