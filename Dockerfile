@@ -50,6 +50,10 @@ RUN python -m pip install --no-cache-dir --no-build-isolation \
 RUN python -m pip install --no-cache-dir --no-build-isolation \
     "git+https://github.com/state-spaces/mamba.git@v1.1.2"
 
+
+RUN python -m pip install --no-cache-dir \
+    "transformers==4.38.2"
+
 RUN python -c "import torch, torchvision, torchaudio; assert torch.__version__.startswith('2.3.1'); assert torchvision.__version__.startswith('0.18.1'); assert torchaudio.__version__.startswith('2.3.1'); assert torch.version.cuda == '11.8'; print('PyTorch:', torch.__version__, 'CUDA:', torch.version.cuda)"
 
 RUN python -c "import causal_conv1d; import mamba_ssm; from mamba_ssm.ops.selective_scan_interface import selective_scan_fn; print('Mamba CUDA extensions imported successfully')"
