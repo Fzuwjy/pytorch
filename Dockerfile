@@ -5,26 +5,16 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV CUDA_HOME=/usr/local/cuda
 
+
 RUN set -eux; \
-    for attempt in 1 2 3 4 5; do \
-        rm -rf /var/lib/apt/lists/*; \
-        if apt-get update \
-            -o Acquire::Retries=5 \
-            -o Acquire::http::Timeout=30 \
-            -o Acquire::https::Timeout=30 \
-            > /tmp/apt-update.log 2>&1 \
-            && ! grep -Eqi 'Could not resolve|Failed to fetch|Some index files failed' /tmp/apt-update.log; then \
-            cat /tmp/apt-update.log; \
-            break; \
-        else \
-            cat /tmp/apt-update.log; \
-            if [ "$attempt" -eq 5 ]; then \
-                echo "APT update failed after 5 attempts"; \
-                exit 1; \
-            fi; \
-            sleep 10; \
-        fi; \
-    done; \
+    find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) -exec sed -i \
+        -e 's|http://archive.ubuntu.com/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' \
+        -e 's|https://archive.ubuntu.com/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' \
+        -e 's|http://security.ubuntu.com/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' \
+        -e 's|https://security.ubuntu.com/ubuntu|https://mirrors.tuna.tsinghua.edu.cn/ubuntu|g' \
+        {} +; \
+    apt-get update -o Acquire::Retries=3 \
+        -o Acquire::https::Timeout=60; \
     apt-get install -y --no-install-recommends \
         git \
         wget \
@@ -35,6 +25,7 @@ RUN set -eux; \
         libgl1 \
         libgomp1; \
     rm -rf /var/lib/apt/lists/*
+
 
 RUN curl -fsSL \
     https://github.com/conda-forge/miniforge/releases/download/25.3.0-3/Miniforge3-25.3.0-3-Linux-x86_64.sh \
