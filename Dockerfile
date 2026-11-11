@@ -6,12 +6,21 @@ ENV MAX_JOBS=1
 ENV CAUSAL_CONV1D_FORCE_BUILD=TRUE
 ENV MAMBA_FORCE_BUILD=TRUE
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    build-essential \
-    cmake \
-    ninja-build \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    for attempt in 1 2 3; do \
+        if apt-get -o Acquire::Retries=5 --error-on=any update; then \
+            break; \
+        fi; \
+        if [ "$attempt" -eq 3 ]; then exit 1; fi; \
+        sleep 15; \
+    done; \
+    apt-get -o Acquire::Retries=5 install -y --no-install-recommends \
+        git \
+        build-essential \
+        cmake \
+        ninja-build; \
+    rm -rf /var/lib/apt/lists/*
+
 
 RUN python -m pip install --no-cache-dir \
     "pip<25" \
@@ -42,13 +51,22 @@ FROM pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 \
-    libgl1 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    for attempt in 1 2 3; do \
+        if apt-get -o Acquire::Retries=5 --error-on=any update; then \
+            break; \
+        fi; \
+        if [ "$attempt" -eq 3 ]; then exit 1; fi; \
+        sleep 15; \
+    done; \
+    apt-get -o Acquire::Retries=5 install -y --no-install-recommends \
+        libglib2.0-0 \
+        libgl1 \
+        libsm6 \
+        libxext6 \
+        libxrender1; \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /wheels /wheels
 
