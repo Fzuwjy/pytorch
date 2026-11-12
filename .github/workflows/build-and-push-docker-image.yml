@@ -12,6 +12,7 @@ on:
 
 jobs:
   build-and-push-image:
+    if: ${{ !contains(github.event.head_commit.message, '[harbor-probe]') }}
     runs-on: ubuntu-24.04
     name: Push Docker image to Harbor
 
@@ -64,3 +65,31 @@ jobs:
           push: ${{ github.event_name == 'release' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+
+  harbor-probe:
+    if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[harbor-probe]') }}
+    runs-on: ubuntu-24.04
+    name: Test Harbor push permission
+
+    steps:
+      - name: Log in to Harbor
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.REGISTRY_HOSTNAME }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push tiny test image
+        env:
+          REGISTRY: ${{ secrets.REGISTRY_HOSTNAME }}
+          PROJECT: ${{ secrets.REGISTRY_REPONAME }}
+        run: |
+          mkdir -p /tmp/harbor-probe
+          echo "Harbor push test" > /tmp/harbor-probe/probe.txt
+          printf 'FROM scratch\nCOPY probe.txt /probe.txt\n' > /tmp/harbor-probe/Dockerfile
+
+          IMAGE="$REGISTRY/$PROJECT/medcagd:push-probe"
+          docker build -t "$IMAGE" /tmp/harbor-probe
+          docker push "$IMAGE"
+
