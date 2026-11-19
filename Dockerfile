@@ -40,11 +40,39 @@ RUN curl -fsSL \
 
 ENV PATH="/opt/conda/envs/medcagd/bin:/opt/conda/bin:${PATH}"
 
+
+RUN python -m pip install --no-cache-dir \
+    nvidia-cuda-nvrtc-cu12==12.8.61 \
+    nvidia-cuda-runtime-cu12==12.8.57 \
+    nvidia-cuda-cupti-cu12==12.8.57 \
+    nvidia-cufile-cu12==1.13.0.11 \
+    nvidia-nvjitlink-cu12==12.8.61 \
+    nvidia-nvtx-cu12==12.8.55
+
+RUN python -m pip install --no-cache-dir \
+    nvidia-cublas-cu12==12.8.3.14
+
+RUN python -m pip install --no-cache-dir \
+    nvidia-cudnn-cu12==9.7.1.26
+
+RUN python -m pip install --no-cache-dir \
+    nvidia-cusparse-cu12==12.5.7.53 \
+    nvidia-cusparselt-cu12==0.6.3
+
+RUN python -m pip install --no-cache-dir \
+    nvidia-cusolver-cu12==11.7.2.55 \
+    nvidia-cufft-cu12==11.3.3.41 \
+    nvidia-curand-cu12==10.3.9.55
+
+RUN python -m pip install --no-cache-dir \
+    nvidia-nccl-cu12==2.26.2
+
 RUN python -m pip install --no-cache-dir \
     torch==2.7.0 \
     torchvision==0.22.0 \
     torchaudio==2.7.0 \
     --index-url https://download.pytorch.org/whl/cu128
+
 
 RUN python -m pip install --no-cache-dir \
     numpy==2.1.2 \
